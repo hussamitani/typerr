@@ -1,0 +1,14 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# rasterized SVG cache (regenerated on demand from svg/)
+.cache_png/
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# launcher icon (copy of a cached PNG)
+typerr.png
