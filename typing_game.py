@@ -95,9 +95,6 @@ LANG = {
         "typed": "german",
         "hint": "Tippe den durchsichtigen Buchstaben!",
         "next": "▶  Weiter",
-        "done_title": "\U0001F389 Geschafft! \U0001F389",
-        "summary": "Wörter geschafft: {}\nFalsche Tasten: {}",
-        "again": "Nochmal spielen", "quit": "Beenden",
         "help_title": "Hilfe",
         "help_text": (
             "So funktioniert's:\n"
@@ -119,9 +116,6 @@ LANG = {
         "typed": "english",
         "hint": "Type the see-through letter!",
         "next": "▶  Next",
-        "done_title": "\U0001F389 All done! \U0001F389",
-        "summary": "Words completed: {}\nWrong keys: {}",
-        "again": "Play again", "quit": "Quit",
         "help_title": "Help",
         "help_text": (
             "How it works:\n"
@@ -353,8 +347,7 @@ class TypingGame(tk.Tk):
         self.svg_dir = svg_dir
         self.cache_dir = cache_dir
         self.index = 0
-        self.total_wrong = 0
-        self.state = "typing"   # typing | revealing | done
+        self.state = "typing"   # typing | revealing
         self.image = None
         self.anim_phase = 0.0
         self.anim_job = None
@@ -445,16 +438,11 @@ class TypingGame(tk.Tk):
         self.theme = "light" if self.theme == "dark" else "dark"
         set_theme(self.theme)
         self._apply_theme()
-        if self.state == "done":
-            self.summary.destroy()
-            self._finish()  # rebuild the summary in the new palette
         if self.help_win is not None and self.help_win.winfo_exists():
             self.help_win.destroy()
             self._show_help()
 
     def _toggle_lang(self, _event=None):
-        if self.state == "done":
-            return  # summary screen is already built; switch next round
         self.lang = "en" if self.lang == "de" else "de"
         strings = LANG[self.lang]
         self.lang_btn.config(text=f"🌐 {self.lang.upper()}")
@@ -575,7 +563,6 @@ class TypingGame(tk.Tk):
             if self.word.finished():
                 self._correct()
         else:
-            self.total_wrong += 1
             self.word.shake()
 
     def _correct(self):
@@ -614,57 +601,8 @@ class TypingGame(tk.Tk):
             self.anim_job = None
         self.index += 1
         if self.index >= len(self.entries):
-            self._finish()
-        else:
-            self._show_word()
-
-    # ------------------------------------------------------------ end game
-
-    def _finish(self):
-        self.state = "done"
-        self._disarm_hint()
-        for widget in (self.canvas, self.word_canvas, self.hint_lbl,
-                       self.next_btn):
-            widget.pack_forget()
-
-        total = len(self.entries)
-        self.summary = tk.Frame(self, bg=T["BG"])
-        self.summary.pack(expand=True)
-
-        s = self.ui_scale
-        strings = LANG[self.lang]
-        tk.Label(self.summary, text=strings["done_title"],
-                 font=("DejaVu Sans", int(36 * s), "bold"),
-                 bg=T["BG"], fg=T["GOOD"]).pack(pady=(0, 16))
-        tk.Label(self.summary,
-                 text=strings["summary"].format(total, self.total_wrong),
-                 font=("DejaVu Sans", int(18 * s), "bold"),
-                 bg=T["BG"], fg=T["FG"],
-                 justify="center").pack(pady=(0, 20))
-
-        btns = tk.Frame(self.summary, bg=T["BG"])
-        btns.pack()
-        tk.Button(btns, text=strings["again"],
-                  font=("DejaVu Sans", int(16 * s), "bold"),
-                  bg=T["CARD"], fg=T["GOOD"], activebackground=T["BG"],
-                  activeforeground=T["GOOD"], relief="flat", padx=16, pady=6,
-                  takefocus=0, command=self._restart).pack(side="left",
-                                                           padx=8)
-        tk.Button(btns, text=strings["quit"],
-                  font=("DejaVu Sans", int(16 * s)),
-                  bg=T["CARD"], fg=T["BAD"], activebackground=T["BG"],
-                  activeforeground=T["BAD"], relief="flat", padx=16, pady=6,
-                  takefocus=0, command=self.destroy).pack(side="left",
-                                                          padx=8)
-
-    def _restart(self):
-        self.summary.destroy()
-        random.shuffle(self.entries)
-        self.index = 0
-        self.total_wrong = 0
-        self.canvas.pack(fill="x", pady=(12, 0))
-        self.word_canvas.pack(fill="x", pady=(6, 0))
-        self.hint_lbl.pack(side="bottom", pady=(4, 18))
+            random.shuffle(self.entries)  # endless training: start over
+            self.index = 0
         self._show_word()
 
 
